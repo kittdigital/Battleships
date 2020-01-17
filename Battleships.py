@@ -1,19 +1,34 @@
 import pgzrun
 import random
+import pygame
+import os
 
 WIDTH = 540
 HEIGHT = 640
 
-# define pieces as lists, [size, shortcode]
+BLACK = 0, 0, 0
+WHITE = 255, 255, 255
+RED = 128, 0, 0
+GREEN = 0, 128, 0
+GREY = 130, 130, 130
 
-carrier = [5, "ca"]
-battleship = [4, "ba"]
-cruiser = [3, "cr"]
-submarine = [3, "su"]
-destroyer = [2, "de"]
+squareX = 0
+squareY = 0
 
-test = 0
+# define pieces as lists, [size, shortcode, hits, name]
 
+carrier = [5, "ca", 5, "Aircarft Carrier"]
+battleship = [4, "ba", 4, "Battleship"]
+cruiser = [3, "cr", 3, "Cruiser"]
+submarine = [3, "su", 3, "Submarine"]
+destroyer = [2, "de", 2, "Destroyer"]
+
+piece_array = [carrier, battleship, cruiser, submarine, destroyer]
+
+ships_to_win = 5
+moves = 0
+
+game_on = True
 
 playermap = [["","","","","","","","","",""],
              ["","","","","","","","","",""],
@@ -38,19 +53,16 @@ enemymap = [["","","","","","","","","",""],
              ["","","","","","","","","",""]]
 
 
-def draw():
-    screen.fill((128, 0, 0))
 
-    BLACK = 0, 0, 0
-    WHITE = 255, 255, 255
+
+def draw():
+    screen.fill((255, 255, 255))
+
     POSX = 20
     POSY = 0
 
-    place_enemy(carrier, enemymap)
-    place_enemy(battleship, enemymap)
-    place_enemy(cruiser, enemymap)
-    place_enemy(submarine, enemymap)
-    place_enemy(destroyer, enemymap)
+    for h in range (10):
+        screen.draw.text(chr(ord("a") + h), (POSX + (h*50) + 20, 2))
 
 
     for i in range (10):
@@ -60,23 +72,138 @@ def draw():
             POSY += 50
         for j in range (10):
             screen.draw.rect(Rect((POSX + (j*50), POSY), (50, 50)), BLACK)
+            screen.draw.text(str(i+1), (2, POSY + 20))
             if enemymap[i][j] != "":
-                screen.draw.text(enemymap[i][j], (POSX + ((j*50)+20), POSY + 20))
+                if enemymap[i][j] == "HIT!":
+                    screen.draw.filled_rect(Rect((POSX + (j*50), POSY), (50, 50)), GREEN)
+
+                elif enemymap[i][j] == "MISS!":
+                    screen.draw.filled_rect(Rect((POSX + (j*50), POSY), (50, 50)), RED)
+                
+                # Uncomment the below two lines to display enemy positions when debugging
+                #else:
+                    #screen.draw.text(enemymap[i][j], (POSX + ((j*50)+20), POSY + 20), color=BLACK)
+ 
+    display_lives()
+
+    if game_on == False:
+        msg = "Game Over! \nYou Won In " + str(moves) + " Moves"
+        screen.draw.text(msg,  center=(270, 260), shadow=(1,1), color=BLACK, fontsize = 70, scolor=GREY)
 
     
-    for i in range (5):
-        screen.draw.rect(Rect((20 +(i*100), HEIGHT - 100), (50, 50)), BLACK)
+
+
+
+
+def check_win():
+
+    global ships_to_win
+    global game_on
+    print("Ships Left: ", str(ships_to_win))
+
+    if (ships_to_win == 0):
+        print("You Win!  All ships found and destroyed")
+
+        game_on = False
+
+
+    
+
+def on_mouse_down(pos):
+    
+    global moves
+    if (game_on == True):
+
+        posX = pos[0]
+        posY = pos[1]
+
+        squareX = (int((((posX) - 20) / 100) * 2 ))
+        squareY = (int((((posY) - 20) / 100) * 2 ))
+
+        if squareX > 9 or squareY > 9 :
+            return
+
+        if (enemymap[squareY][squareX] == "HIT!" ):
+            print("hit")
+            enemymap[squareY][squareX] = 'HIT!'
+
+        elif (enemymap[squareY][squareX] == "ca" ):
+            carrier[2] = carrier[2] - 1
+            print(carrier[3], "Hit!")
+            enemymap[squareY][squareX] = 'HIT!'
+            check_ship_status(carrier)
+
+        elif (enemymap[squareY][squareX] == "ba" ):
+            battleship[2] = battleship[2] - 1
+            print(battleship[3], "Hit!")
+            enemymap[squareY][squareX] = 'HIT!'
+            check_ship_status(battleship)
+
+
+        elif (enemymap[squareY][squareX] == "cr" ):        
+            cruiser[2] = cruiser[2] - 1
+            print(cruiser[3], "Hit!")
+            enemymap[squareY][squareX] = 'HIT!'
+            check_ship_status(cruiser)
+
+
+        elif (enemymap[squareY][squareX] == "su" ):
+            submarine[2] = submarine[2] - 1
+            print(submarine[3], "Hit!")
+            enemymap[squareY][squareX] = 'HIT!'
+            check_ship_status(submarine)
+
+
+        elif (enemymap[squareY][squareX] == "de" ):
+            destroyer[2] = destroyer[2] - 1
+            print(destroyer[3], "Hit!")
+            enemymap[squareY][squareX] = 'HIT!'
+            check_ship_status(destroyer)
+
+        else:
+            print("miss")
+            enemymap[squareY][squareX] = 'MISS!'
+            moves = moves + 1
+
+ 
+        
+
+
+def display_lives():
+
+    
+
+    for j in range (len(piece_array)):
+
+        if piece_array[j][2] == 0:
+            screen.draw.filled_rect(Rect((20 +(j*105), HEIGHT - 100), (75, 50)), GREEN)
+        else:
+            screen.draw.rect(Rect((20 +(j*105), HEIGHT - 100), (75, 50)), BLACK)
+
+
+        screen.draw.text(str(piece_array[j][2]), (45 +(j * 105), HEIGHT - 90), color=BLACK, fontsize = 50)
+
+        screen.draw.text(piece_array[j][3], (20 + (j * 107), HEIGHT - 40), color=BLACK, fontsize = 16)
+
+def check_ship_status(piece):
+    
+    global ships_to_win
+    global moves 
+    
+    moves = moves + 1
+    if piece[2] == 0 :
+            print("You Sunk The " + piece[3] + "!")
+            ships_to_win = ships_to_win -1
+    
+    check_win()
+
 
 
 def place_enemy(piece, enemymap):
 
     piece_size = piece[0]
     piece_code = piece[1]
-    valid_position = False
-
-    print(piece_size)
-    print(piece_code)
-    
+    valid_position = False   
 
     while (not valid_position):
         x = random.randint(0,9)
@@ -95,17 +222,17 @@ def place_enemy(piece, enemymap):
 
 
 
-def place_ship(enemymap,ship,s,orientation,x,y):
+def place_ship(map,ship,s,orientation,x,y):
 
 	#place ship based on orientation
 	if orientation == "v":
 		for i in range(ship):
-			enemymap[x+i][y] = s
+			map[x+i][y] = s
 	elif orientation == "h":
 		for i in range(ship):
-			enemymap[x][y+i] = s
+			map[x][y+i] = s
 
-	return enemymap
+	return map
 
 
 
@@ -142,170 +269,19 @@ def generate_random_position(limit):
 
 
 
-def define_enemy_pos():
-    
-
-
-
-
-    define_carrier_pos()
-    define_battleship_pos()
-    define_cruiser_pos()
-
-
 
 def printEnemyMap():
     for j in range(len(enemymap)):
         print(enemymap[j])
 
 
-def define_carrier_pos():
-    carrier_positions = [[0,0], [0,0], [0,0], [0,0], [0,0]]
+place_enemy(carrier, enemymap)
+place_enemy(battleship, enemymap)
+place_enemy(cruiser, enemymap)
+place_enemy(submarine, enemymap)
+place_enemy(destroyer, enemymap)
 
-    carrier_positions[0] = [random.randint(0,9), random.randint(0,9)]
-    print(carrier_positions[0])
-
-    if  (carrier_positions[0][0] > 4) and (carrier_positions[0][1] > 4):
-        define_carrier_pos()
-    elif (carrier_positions[0][0] > 4):
-        
-        enemymap[carrier_positions[0][0]][carrier_positions[0][1]] = "ca"
-        for i in range(1,5):
-
-            carrier_positions[i] = [carrier_positions[i-1][0], carrier_positions[i-1][1] + 1]
-            print("Carrier Position: " + str(carrier_positions[i][0]) + ", " + str(carrier_positions[i][1]))
-            print()
-            enemymap[carrier_positions[i][0]][carrier_positions[i][1]] = "ca"
-        
-        printEnemyMap()
-    
-    elif (carrier_positions[0][0] <= 4):
-        direction = random.randint(0,1)  # 0 = Left to right, 1 = Up down
-        
-        if (direction == 0) and (carrier_positions[0][1] <= 4):
-            enemymap[carrier_positions[0][0]][carrier_positions[0][1]] = "ca"
-            for i in range(1,5):
-
-                carrier_positions[i] = [carrier_positions[i-1][0], carrier_positions[i-1][1] + 1]
-                print(carrier_positions[i][0])
-                print(carrier_positions[i][1])
-                enemymap[carrier_positions[i][0]][carrier_positions[i][1]] = "ca"
-        
-            printEnemyMap()
-        else:
-
-            enemymap[carrier_positions[0][0]][carrier_positions[0][1]] = "ca"
-            for i in range(1,5):
-
-                carrier_positions[i] = [carrier_positions[i-1][0] + 1, carrier_positions[0][1]]
-                print(carrier_positions[i][0])
-                print(carrier_positions[i][1])
-                enemymap[carrier_positions[i][0]][carrier_positions[i][1]] = "ca"
-        
-            printEnemyMap()
-
-
-def define_battleship_pos():
-    battleship_positions = [[0,0], [0,0], [0,0], [0,0]]
-
-    battleship_positions[0] = [random.randint(0,9), random.randint(0,9)]
-
-    print(battleship_positions[0])
-
-
-
-
-
-
-
-
-
-    
-    
-
-
-
-
-
-
-def define_cruiser_pos():
-    cruiser_positions = [[0,0], [0,0], [0,0]]
-
-    cruiser_positions[0] = [random.randint(0,9), random.randint(0,9)]
-
-    
-    print(cruiser_positions[0])
-
-    if  (cruiser_positions[0][0] > 3) and (cruiser_positions[0][1] > 3):
-        define_cruiser_pos()
-    elif (cruiser_positions[0][0] > 3):
-        
-        if (enemymap[cruiser_positions[0][0]][cruiser_positions[0][1]] != ''):
-            define_cruiser_pos()
-        else:
-
-            enemymap[cruiser_positions[0][0]][cruiser_positions[0][1]] = "cr"
-
-
-        for i in range(1,3):
-
-            cruiser_positions[i] = [cruiser_positions[i-1][0], cruiser_positions[i-1][1] + 1]
-            print(cruiser_positions[i][0])
-            print(cruiser_positions[i][1])
-
-            if (enemymap[cruiser_positions[i][0]][cruiser_positions[i][1]] != ''):
-                print("Enemy Grid Search Result: " + str(searchEnemyGrid(enemymap,"cr")))
-                if (searchEnemyGrid(enemymap,"cr")):
-                    print("No \"cr\" found")
-                else:
-
-                    enemymap[cruiser_positions[i][0]][cruiser_positions[i][1]] = "cr"
-
-                # define_cruiser_pos()
-            else:
-                enemymap[cruiser_positions[i][0]][cruiser_positions[i][1]] = "cr"
-        
-        printEnemyMap()
-    
-    elif (cruiser_positions[0][0] <= 3):
-        direction = random.randint(0,1)  # 0 = Left to right, 1 = Up down
-        
-        if (direction == 0) and (cruiser_positions[0][1] <= 3):
-            enemymap[cruiser_positions[0][0]][cruiser_positions[0][1]] = "cr"
-            for i in range(1,3):
-
-                cruiser_positions[i] = [cruiser_positions[i-1][0], cruiser_positions[i-1][1] + 1]
-                print(cruiser_positions[i][0])
-                print(cruiser_positions[i][1])
-                if (enemymap[cruiser_positions[i][0]][cruiser_positions[i][1]] != ''):
-                    print("Enemy Grid Search Result: " + str(searchEnemyGrid(enemymap,"cr")))
-                    define_cruiser_pos()
-                else:
-                    enemymap[cruiser_positions[i][0]][cruiser_positions[i][1]] = "cr"
-        
-            printEnemyMap()
-        else:
-
-            enemymap[cruiser_positions[0][0]][cruiser_positions[0][1]] = "cr"
-            for i in range(1,3):
-
-                cruiser_positions[i] = [cruiser_positions[i-1][0] + 1, cruiser_positions[0][1]]
-                print(cruiser_positions[i][0])
-                print(cruiser_positions[i][1])
-
-                if (enemymap[cruiser_positions[i][0]][cruiser_positions[i][1]] != ''):
-                    print("Enemy Grid Search Result: " + str(searchEnemyGrid(enemymap,"cr")))
-                    define_cruiser_pos()
-                else:
-                    enemymap[cruiser_positions[i][0]][cruiser_positions[i][1]] = "cr"
-        
-            printEnemyMap()
-        
-
-
-def searchEnemyGrid(matrix, text):
-    indexes = [index for index, v in enumerate(matrix) if v == text]
-    print(indexes)
-    return indexes
-
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 pgzrun.go()
+
+
